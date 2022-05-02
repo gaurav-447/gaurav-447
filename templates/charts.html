@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+<script>
+{% block jquery %}
+window.setTimeout(function () {
+    location.href = "http://127.0.0.1:8000/";
+}, 300000);
+var endpoint = 'https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY'
+var defaultData = []
+var labels = [];
+var pcr = 0;
+var defaultDatanw = []
+var labelsnw = [];
+var pcrnw = 0;
+var ltp = 0;
+$.ajax({
+    method: "GET",
+    url: endpoint,
+    success: function(data){
+        labels = data
+        defaultData = data.default
+        pcr = data.pcr
+        labelsnw = data.labelsnw
+        defaultDatanw = data.defaultnw
+        pcrnw = data.pcrnw
+        ltp = data.ltp
+        setChart()
+    },
+    error: function(error_data){
+        console.log("error")
+        console.log(error_data)
+    }
+})
+
+function setChart(){
+    document.getElementById("pcr").innerHTML = labels;
+    document.getElementById("ltp").innerHTML = ltp;
+    var ctx2 = document.getElementById("myChart2");
+    var myChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets:  [{
+        label: 'PE',
+        backgroundColor: 'green',
+        data: defaultData.PE
+      },
+      {
+        label: 'CE',
+        backgroundColor: 'red',
+        data: defaultData.CE
+      }
+    ]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+});
+
+    document.getElementById("pcrnw").innerHTML = pcrnw;
+    document.getElementById("ltpnw").innerHTML = ltp;
+    var ctx2nw = document.getElementById("myChart2nw");
+    var myChartnw = new Chart(ctx2nw, {
+    type: 'bar',
+    data: {
+        labels: labelsnw,
+        datasets:  [{
+        label: 'PE',
+        backgroundColor: 'green',
+        data: defaultDatanw.PE
+      },
+      {
+        label: 'CE',
+        backgroundColor: 'red',
+        data: defaultDatanw.CE
+      }
+    ]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+});
+
+
+
+}
+// var ctx = document.getElementById("myChart");
+
+
+
+{% endblock %}
+</script>
+
+{% block content %}
+
+<div class='row'>
+    <div class='col-sm-12' url-endpoint='{% url "api-data" %}'>
+        <div class='col-sm-12'>
+            <canvas id="myChart2" width="100" height="60"></canvas>
+        </div>
+        <div>PCR: <span id="pcr" style="font-weight: bold"></span></div>
+        <div>LTP: <span id="ltp" style="font-weight: bold"></span></div>
+
+        <div class='col-sm-12'>
+            <canvas id="myChart2nw" width="100" height="60"></canvas>
+        </div>
+        <div>PCR NW: <span id="pcrnw" style="font-weight: bold"></span></div>
+        <div>LTP NW: <span id="ltpnw" style="font-weight: bold"></span></div>
+    </div>
+</div>
+
+{% endblock content %}
