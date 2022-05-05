@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
 
+
+
+{% block content %}
 <script>
 {% block jquery %}
 window.setTimeout(function () {
     location.href = "http://127.0.0.1:8000/";
-}, 300000);
-var endpoint = 'https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY'
+}, 100000);
+var endpoint = '/api/chart/data/'
 var defaultData = []
 var labels = [];
 var pcr = 0;
@@ -13,28 +16,61 @@ var defaultDatanw = []
 var labelsnw = [];
 var pcrnw = 0;
 var ltp = 0;
-$.ajax({
-    method: "GET",
-    url: endpoint,
-    success: function(data){
-        labels = data
-        defaultData = data.default
-        pcr = data.pcr
-        labelsnw = data.labelsnw
-        defaultDatanw = data.defaultnw
-        pcrnw = data.pcrnw
-        ltp = data.ltp
-        setChart()
-    },
-    error: function(error_data){
-        console.log("error")
-        console.log(error_data)
-    }
-})
+var expiryNW = 0;
+var expiry = 0;
+var symbol = 'nifty';
+
+function getData(value){
+    symbol = value;
+    $.ajax({
+        method: "GET",
+        url: endpoint,
+        success: function(data){
+
+            if(symbol == 'nifty'){
+                labels = data.nifty_data.expiry_data.labels
+                defaultData = data.nifty_data.expiry_data.default
+                pcr = data.nifty_data.expiry_data.pcr
+                expiry = data.nifty_data.expiry
+                labelsnw = data.nifty_data.expiry_next_week_data.labelsnw
+                defaultDatanw = data.nifty_data.expiry_next_week_data.defaultnw
+               pcrnw = data.nifty_data.expiry_next_week_data.pcrnw
+                ltp = data.nifty_data.ltp
+                expiryNW = data.nifty_data.expiry_next_week
+                setChart();
+            }else{
+                labels = data.bank_nifty_data.expiry_data.labels
+                defaultData = data.bank_nifty_data.expiry_data.default
+                pcr = data.bank_nifty_data.expiry_data.pcr
+                expiry = data.bank_nifty_data.expiry
+                labelsnw = data.bank_nifty_data.expiry_next_week_data.labelsnw
+                defaultDatanw = data.bank_nifty_data.expiry_next_week_data.defaultnw
+               pcrnw = data.bank_nifty_data.expiry_next_week_data.pcrnw
+                ltp = data.bank_nifty_data.ltp
+                expiryNW = data.bank_nifty_data.expiry_next_week
+                setChartBankNifty();
+            }
+
+        },
+        error: function(error_data){
+            console.log("error")
+            console.log(error_data)
+        }
+    })
+}
+
+getData('nifty');
 
 function setChart(){
-    document.getElementById("pcr").innerHTML = labels;
+    document.getElementById("nifty").style.display = "block";
+    document.getElementById("bankNifty").style.display = "none";
+
+    document.getElementById("pcr").innerHTML = pcr;
     document.getElementById("ltp").innerHTML = ltp;
+
+    document.getElementById("expiryNifty").innerHTML = expiry;
+    document.getElementById("expiryNWNifty").innerHTML = expiryNW;
+
     var ctx2 = document.getElementById("myChart2");
     var myChart = new Chart(ctx2, {
     type: 'bar',
@@ -92,9 +128,76 @@ function setChart(){
         }
     }
 });
+}
 
+function setChartBankNifty(){
+    document.getElementById("nifty").style.display = "none";
+    document.getElementById("bankNifty").style.display = "block";
 
+    document.getElementById("pcrbankNifty").innerHTML = pcr;
+    document.getElementById("ltpbankNifty").innerHTML = ltp;
 
+    var ctx2 = document.getElementById("bankNiftyChart2");
+    var myChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets:  [{
+        label: 'PE',
+        backgroundColor: 'green',
+        data: defaultData.PE
+      },
+      {
+        label: 'CE',
+        backgroundColor: 'red',
+        data: defaultData.CE
+      }
+    ]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+});
+
+    document.getElementById("pcrnwbankNifty").innerHTML = pcrnw;
+    document.getElementById("ltpnwbankNifty").innerHTML = ltp;
+
+    document.getElementById("expiryBankNifty").innerHTML = expiry;
+    document.getElementById("expiryNWBankNifty").innerHTML = expiryNW;
+
+    var ctx2nw = document.getElementById("bankNiftyChart2nw");
+    var myChartnw = new Chart(ctx2nw, {
+    type: 'bar',
+    data: {
+        labels: labelsnw,
+        datasets:  [{
+        label: 'PE',
+        backgroundColor: 'green',
+        data: defaultDatanw.PE
+      },
+      {
+        label: 'CE',
+        backgroundColor: 'red',
+        data: defaultDatanw.CE
+      }
+    ]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+});
 }
 // var ctx = document.getElementById("myChart");
 
@@ -102,22 +205,42 @@ function setChart(){
 
 {% endblock %}
 </script>
-
-{% block content %}
-
 <div class='row'>
-    <div class='col-sm-12' url-endpoint='{% url "api-data" %}'>
+    <div class='col-sm-12' >
+        <button type="button" class="btn btn-primary" onClick="getData('nifty')">Nifty</button>
+        <button type="button" class="btn btn-success" onClick="getData('bankNifty')">Bank Nifty</button>
+    </div>
+    <div class='col-sm-12' id="nifty" >
+
         <div class='col-sm-12'>
             <canvas id="myChart2" width="100" height="60"></canvas>
         </div>
+        <div>expiry Nifty: <span id="expiryNifty" style="font-weight: bold"></span></div>
         <div>PCR: <span id="pcr" style="font-weight: bold"></span></div>
         <div>LTP: <span id="ltp" style="font-weight: bold"></span></div>
 
         <div class='col-sm-12'>
             <canvas id="myChart2nw" width="100" height="60"></canvas>
         </div>
+        <div>expiry next week Nifty: <span id="expiryNWNifty" style="font-weight: bold"></span></div>
         <div>PCR NW: <span id="pcrnw" style="font-weight: bold"></span></div>
         <div>LTP NW: <span id="ltpnw" style="font-weight: bold"></span></div>
+    </div>
+
+    <div class='col-sm-12' id="bankNifty">
+        <div class='col-sm-12'>
+            <canvas id="bankNiftyChart2" width="100" height="60"></canvas>
+        </div>
+        <div>expiry Bank Nifty: <span id="expiryBankNifty" style="font-weight: bold"></span></div>
+        <div>PCR: <span id="pcrbankNifty" style="font-weight: bold"></span></div>
+        <div>LTP: <span id="ltpbankNifty" style="font-weight: bold"></span></div>
+
+        <div class='col-sm-12'>
+            <canvas id="bankNiftyChart2nw" width="100" height="60"></canvas>
+        </div>
+        <div>expiry next week Bank Nifty: <span id="expiryNWBankNifty" style="font-weight: bold"></span></div>
+        <div>PCR NW: <span id="pcrnwbankNifty" style="font-weight: bold"></span></div>
+        <div>LTP NW: <span id="ltpnwbankNifty" style="font-weight: bold"></span></div>
     </div>
 </div>
 
